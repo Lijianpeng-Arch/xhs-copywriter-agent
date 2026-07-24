@@ -109,15 +109,6 @@ footer{text-align:center;padding:30px;color:var(--text-light);font-size:12px}
 <input type="text" id="topicInput" placeholder="例如：杭州周末brunch推荐" value="杭州周末brunch推荐">
 </div>
 
-<div class="input-group">
-<label>文案风格</label>
-<select id="styleSelect">
-<option value="0">种草安利型（热情推荐）</option>
-<option value="1">干货攻略型（实用分享）</option>
-<option value="2">情感共鸣型（走心故事）</option>
-</select>
-</div>
-
 <button class="btn-generate" onclick="generate()" id="genBtn">✨ 一键生成爆款文案</button>
 </div>
 
@@ -171,8 +162,8 @@ footer{text-align:center;padding:30px;color:var(--text-light);font-size:12px}
 </div>
 
 <footer>
-<p>小红书爆款文案 Agent v1.0 · 基于RAG知识库 + 提示词工程 + 爆款规律拆解</p>
-<p style="margin-top:6px">本演示为预置数据展示 · 接入LLM后可生成任意品类文案</p>
+<p>小红书爆款文案 Agent · <strong>LLM 模式 + 离线引擎双链路</strong>，5 品类爆款公式 + 6 维评分，无 API 也能生成</p>
+<p style="margin-top:6px"><a href="https://lijianpeng-arch.github.io/" style="color:var(--text-light)">← 返回作品集主页</a> · 接入 LLM 后可生成任意品类文案</p>
 </footer>
 
 <script>
@@ -244,7 +235,9 @@ const contents = [
   titles:[
     {text:'油皮亲妈！这瓶精华让我3天不泛油光😱',tech:'效果前置+具体数据+震惊表情'},
     {text:'求求了别再乱买了❗油皮精华红黑榜来了',tech:'祈使句+红黑榜形式+悬念'},
-    {text:'油皮姐妹看过来！5款精华真实测评｜有雷有宝',tech:'精准人群+数量+真实感+反差'}
+    {text:'油皮姐妹看过来！5款精华真实测评｜有雷有宝',tech:'精准人群+数量+真实感+反差'},
+    {text:'从烂脸到光滑肌！这5款精华让我真香了💧',tech:'结果前置+对比反差+亲身体验'},
+    {text:'敏感肌也能用的5款控油精华｜成分党亲测✅',tech:'人群精准+数字列举+权威背书'}
   ],
   content:`油皮姐妹们集合！！今天来交作业了📝
 

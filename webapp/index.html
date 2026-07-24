@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小红书爆款文案 Agent</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",sans-serif; }
+  body {
+    min-height:100vh;
+    background: linear-gradient(135deg,#fff0f3 0%,#ffe4ea 45%,#ffd9e3 100%);
+    color:#3d2b30; padding:24px 16px 60px; overflow-x:hidden;
+  }
+  .blob { position:fixed; border-radius:50%; filter:blur(90px); z-index:0; pointer-events:none; }
+  .blob1 { width:420px;height:420px; background:rgba(255,36,66,.20); top:-120px; left:-100px; }
+  .blob2 { width:380px;height:380px; background:rgba(255,150,180,.28); bottom:-100px; right:-80px; }
+  .blob3 { width:260px;height:260px; background:rgba(255,200,120,.22); top:40%; left:60%; }
+  .wrap { max-width:1080px; margin:0 auto; position:relative; z-index:1; }
+
+  /* 顶栏 */
+  .topbar {
+    display:flex; align-items:center; gap:14px; padding:16px 22px;
+    background:rgba(255,255,255,.55); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+    border-radius:18px; box-shadow:0 8px 32px rgba(255,36,66,.10); border:1px solid rgba(255,255,255,.7);
+  }
+  .logo { font-size:26px; }
+  .app-name { font-size:19px; font-weight:700; color:#ff2442; letter-spacing:.5px; }
+  .app-sub { font-size:12px; color:#a07885; margin-top:2px; }
+  .badge { margin-left:auto; font-size:12px; padding:6px 14px; border-radius:999px; font-weight:600; white-space:nowrap; }
+  .badge.online { background:#e6f9ec; color:#1a9e4b; border:1px solid #b7e8c6; }
+  .badge.offline { background:#f1eef0; color:#8a7a80; border:1px solid #ddd3d7; }
+  .gear-btn {
+    width:38px;height:38px;border-radius:12px;border:1px solid rgba(255,255,255,.8); cursor:pointer;
+    background:rgba(255,255,255,.6); font-size:17px; transition:.2s;
+  }
+  .gear-btn:hover { transform:rotate(40deg); background:#fff; }
+
+  /* 卡片通用 */
+  .card {
+    background:rgba(255,255,255,.55); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+    border-radius:20px; border:1px solid rgba(255,255,255,.7);
+    box-shadow:0 10px 40px rgba(255,36,66,.08); padding:26px; margin-top:22px;
+  }
+  .card h2 { font-size:16px; color:#ff2442; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+
+  /* 品类胶囊 */
+  .capsules { display:flex; flex-wrap:wrap; gap:10px; }
+  .capsule {
+    padding:9px 20px; border-radius:999px; cursor:pointer; font-size:14px; font-weight:600;
+    background:rgba(255,255,255,.7); border:1.5px solid #ffd0da; color:#b06a7c; transition:.2s;
+  }
+  .capsule:hover { border-color:#ff2442; color:#ff2442; }
+  .capsule.active { background:linear-gradient(135deg,#ff2442,#ff6b8b); color:#fff; border-color:transparent; box-shadow:0 6px 16px rgba(255,36,66,.35); }
+
+  .field { margin-top:18px; }
+  .field label { display:block; font-size:13px; font-weight:600; color:#8a5563; margin-bottom:8px; }
+  .field input, .field textarea {
+    width:100%; padding:12px 16px; border-radius:14px; border:1.5px solid #ffd0da; font-size:14px;
+    background:rgba(255,255,255,.75); outline:none; transition:.2s; color:#3d2b30; resize:vertical;
+  }
+  .field input:focus, .field textarea:focus { border-color:#ff2442; box-shadow:0 0 0 4px rgba(255,36,66,.08); background:#fff; }
+
+  .btn-main {
+    margin-top:22px; width:100%; padding:15px; border:none; border-radius:16px; cursor:pointer;
+    background:linear-gradient(135deg,#ff2442,#ff6b8b); color:#fff; font-size:16px; font-weight:700;
+    letter-spacing:1px; box-shadow:0 10px 24px rgba(255,36,66,.35); transition:.2s;
+  }
+  .btn-main:hover { transform:translateY(-2px); box-shadow:0 14px 30px rgba(255,36,66,.42); }
+  .btn-main:disabled { opacity:.65; cursor:not-allowed; transform:none; }
+
+  .spinner { display:inline-block; width:16px;height:16px; border:2.5px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; vertical-align:-3px; margin-right:8px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  .err-box { margin-top:16px; padding:12px 16px; border-radius:12px; background:#fff2f3; border:1px solid #ffc9d2; color:#d21f3c; font-size:13px; display:none; }
+  .fallback-box { margin-top:16px; padding:12px 16px; border-radius:12px; background:#fff8ec; border:1px solid #ffe0b0; color:#b07818; font-size:13px; display:none; }
+
+  /* 结果区 */
+  #resultArea { display:none; }
+  .src-tag { font-size:11px; padding:3px 10px; border-radius:999px; font-weight:600; margin-left:6px; }
+  .src-tag.llm { background:#e6f9ec; color:#1a9e4b; }
+  .src-tag.offline { background:#f1eef0; color:#8a7a80; }
+
+  .title-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px; }
+  .title-card {
+    padding:14px 16px; border-radius:14px; cursor:pointer; transition:.2s;
+    background:rgba(255,255,255,.75); border:2px solid transparent; box-shadow:0 4px 14px rgba(255,36,66,.06);
+  }
+  .title-card:hover { transform:translateY(-2px); }
+  .title-card.selected { border-color:#ff2442; background:#fff; box-shadow:0 8px 20px rgba(255,36,66,.18); }
+  .title-card .t-formula { display:inline-block; font-size:11px; color:#ff2442; background:#ffe9ee; padding:2px 9px; border-radius:999px; margin-bottom:7px; font-weight:600; }
+  .title-card .t-text { font-size:14px; font-weight:700; color:#3d2b30; line-height:1.5; }
+  .title-card .t-check { float:right; color:#ff2442; font-weight:700; visibility:hidden; }
+  .title-card.selected .t-check { visibility:visible; }
+
+  .preview-flex { display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+
+  /* 手机笔记预览 */
+  .phone {
+    width:330px; min-width:300px; border-radius:32px; background:#fff; padding:0 0 18px;
+    box-shadow:0 18px 50px rgba(61,20,30,.20); border:6px solid #2c1a1f; overflow:hidden; flex-shrink:0;
+  }
+  .phone-status { background:#fff; padding:10px 18px 4px; font-size:11px; color:#333; display:flex; justify-content:space-between; }
+  .phone-nav { padding:8px 16px 10px; border-bottom:1px solid #f3e6ea; display:flex; gap:18px; font-size:13px; color:#b9a0a8; }
+  .phone-nav .on { color:#ff2442; font-weight:700; border-bottom:2px solid #ff2442; padding-bottom:6px; }
+  .phone-body { padding:16px 18px; max-height:480px; overflow-y:auto; }
+  .phone-title { font-size:16px; font-weight:800; color:#222; line-height:1.45; margin-bottom:12px; }
+  .phone-content { font-size:13px; color:#444; line-height:1.85; white-space:pre-wrap; word-break:break-word; }
+  .phone-tags { margin-top:12px; font-size:13px; line-height:2; color:#ff2442; font-weight:600; }
+  .phone-footer { margin-top:16px; padding-top:12px; border-top:1px solid #f3e6ea; display:flex; justify-content:space-around; font-size:13px; color:#9c848c; }
+
+  .result-side { flex:1; min-width:280px; }
+  .tag-chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .tag-chip { font-size:12px; color:#ff2442; background:#ffe9ee; padding:5px 13px; border-radius:999px; font-weight:600; }
+
+  /* 评分条形图（纯CSS） */
+  .score-total { display:flex; align-items:baseline; gap:10px; margin-bottom:16px; }
+  .score-num { font-size:34px; font-weight:800; color:#ff2442; }
+  .score-grade { font-size:13px; font-weight:700; padding:4px 12px; border-radius:999px; background:linear-gradient(135deg,#ff2442,#ff6b8b); color:#fff; }
+  .score-row { display:flex; align-items:center; gap:12px; margin-bottom:11px; font-size:13px; }
+  .score-name { width:88px; flex-shrink:0; color:#7c5b64; font-weight:600; }
+  .score-bar-bg { flex:1; height:12px; border-radius:999px; background:rgba(255,208,218,.45); overflow:hidden; }
+  .score-bar { height:100%; border-radius:999px; background:linear-gradient(90deg,#ff6b8b,#ff2442); width:0; transition:width .8s cubic-bezier(.2,.8,.3,1); }
+  .score-val { width:58px; text-align:right; font-size:12px; color:#a07885; flex-shrink:0; }
+
+  .action-row { display:flex; gap:12px; margin-top:22px; flex-wrap:wrap; }
+  .btn-sub {
+    flex:1; min-width:160px; padding:13px; border-radius:14px; cursor:pointer; font-size:14px; font-weight:700;
+    border:1.5px solid #ff2442; background:rgba(255,255,255,.7); color:#ff2442; transition:.2s;
+  }
+  .btn-sub:hover { background:#ff2442; color:#fff; }
+  .btn-sub.primary { background:linear-gradient(135deg,#ff2442,#ff6b8b); color:#fff; border-color:transparent; }
+  .btn-sub.primary:hover { opacity:.9; }
+
+  /* 设置弹窗 */
+  .modal-mask { position:fixed; inset:0; background:rgba(61,20,30,.35); backdrop-filter:blur(4px); z-index:50; display:none; align-items:center; justify-content:center; padding:20px; }
+  .modal-mask.show { display:flex; }
+  .modal { width:100%; max-width:480px; background:rgba(255,255,255,.92); backdrop-filter:blur(24px); border-radius:22px; padding:28px; box-shadow:0 24px 70px rgba(61,20,30,.3); max-height:88vh; overflow-y:auto; }
+  .modal h3 { color:#ff2442; font-size:17px; margin-bottom:6px; }
+  .modal .hint { font-size:12px; color:#a07885; line-height:1.7; margin-bottom:16px; }
+  .modal label { display:block; font-size:13px; font-weight:600; color:#8a5563; margin:14px 0 7px; }
+  .modal input, .modal select {
+    width:100%; padding:11px 14px; border-radius:12px; border:1.5px solid #ffd0da; font-size:14px;
+    background:#fff; outline:none; color:#3d2b30;
+  }
+  .modal input:focus, .modal select:focus { border-color:#ff2442; }
+  .modal-btns { display:flex; gap:10px; margin-top:20px; flex-wrap:wrap; }
+  .m-btn { flex:1; min-width:120px; padding:12px; border-radius:12px; cursor:pointer; font-size:14px; font-weight:700; border:none; transition:.2s; }
+  .m-btn.red { background:linear-gradient(135deg,#ff2442,#ff6b8b); color:#fff; }
+  .m-btn.gray { background:#f3edf0; color:#8a5563; }
+  .m-btn.line { background:#fff; border:1.5px solid #ffd0da; color:#ff2442; }
+  .m-btn:hover { opacity:.88; }
+  .detect-result { margin-top:14px; font-size:13px; display:none; padding:12px 14px; border-radius:12px; line-height:1.8; }
+  .detect-result.ok { background:#e6f9ec; color:#1a9e4b; display:block; }
+  .detect-result.fail { background:#fff2f3; color:#d21f3c; display:block; }
+  .adv-toggle { margin-top:16px; font-size:13px; color:#ff2442; cursor:pointer; font-weight:600; }
+  .adv-box { display:none; margin-top:4px; }
+  .adv-box.show { display:block; }
+  .cur-config { font-size:12px; color:#a07885; margin-top:16px; padding:10px 14px; background:#fdf4f6; border-radius:10px; line-height:1.9; word-break:break-all; }
+
+  .toast { position:fixed; top:26px; left:50%; transform:translateX(-50%) translateY(-80px); background:#3d2b30; color:#fff; font-size:14px; padding:12px 26px; border-radius:999px; z-index:99; transition:.35s; box-shadow:0 10px 30px rgba(0,0,0,.25); }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+
+  @media (max-width:720px){ .phone{margin:0 auto;} }
+</style>
+</head>
+<body>
+<div class="blob blob1"></div><div class="blob blob2"></div><div class="blob blob3"></div>
+<div class="wrap">
+
+  <!-- 顶栏 -->
+  <div class="topbar">
+    <div class="logo">📕</div>
+    <div>
+      <div class="app-name">小红书爆款文案 Agent</div>
+      <div class="app-sub">输入主题，一键生成爆款标题 + 文案 + 标签 + 评分</div>
+    </div>
+    <span class="badge offline" id="modeBadge">离线规则引擎模式</span>
+    <button class="gear-btn" id="openSettings" title="设置">⚙️</button>
+  </div>
+
+  <!-- 输入区 -->
+  <div class="card">
+    <h2>✍️ 创作设置</h2>
+    <div style="font-size:12.5px; color:#a07885; background:rgba(255,208,218,.28); border:1px solid rgba(255,150,180,.25); border-radius:10px; padding:8px 12px; margin-bottom:14px; line-height:1.6;">💡 未配置 API Key 时使用内置规则引擎生成；点右上角 ⚙️ 配置 Key 可获得 AI 深度创作（约需 10~40 秒）。</div>
+    <div class="capsules" id="capsules"></div>
+    <div class="field">
+      <label>主题关键词 <span style="color:#ff2442">*</span></label>
+      <input id="topicInput" placeholder='例如：杭州周末brunch、敏感肌早C晚A、打工人体面副业'>
+    </div>
+    <div class="field">
+      <label>补充说明（可选）</label>
+      <textarea id="detailsInput" rows="2" placeholder="例如：人均60以内、适合学生党、想突出拍照好看……"></textarea>
+    </div>
+    <button class="btn-main" id="genBtn">🔥 生成爆款文案</button>
+    <div id="genStage" style="display:none; font-size:12.5px; color:#c2485e; margin-top:10px; text-align:center; background:rgba(255,208,218,.25); border-radius:10px; padding:7px 12px;"></div>
+    <div class="err-box" id="errBox"></div>
+    <div class="fallback-box" id="fallbackBox"></div>
+  </div>
+
+  <!-- 结果区 -->
+  <div id="resultArea">
+    <div class="card">
+      <h2>🏆 备选标题（点击选择最喜欢的一个）<span class="src-tag offline" id="srcTag">离线生成</span></h2>
+      <div class="title-grid" id="titleGrid"></div>
+    </div>
+
+    <div class="card">
+      <h2>📱 笔记预览</h2>
+      <div class="preview-flex">
+        <div class="phone">
+          <div class="phone-status"><span>9:41</span><span>📶 🔋</span></div>
+          <div class="phone-nav"><span>关注</span><span class="on">发现</span><span>附近</span></div>
+          <div class="phone-body">
+            <div class="phone-title" id="pvTitle"></div>
+            <div class="phone-content" id="pvContent"></div>
+            <div class="phone-tags" id="pvTags"></div>
+            <div class="phone-footer"><span>❤️ 赞</span><span>⭐ 收藏</span><span>💬 评论</span></div>
+          </div>
+        </div>
+        <div class="result-side">
+          <h2 style="font-size:14px;">🏷️ 推荐标签</h2>
+          <div class="tag-chips" id="tagChips"></div>
+          <h2 style="font-size:14px; margin-top:26px;">📊 爆款潜力评分</h2>
+          <div class="score-total">
+            <span class="score-num" id="scoreNum">0</span>
+            <span style="color:#a07885;font-size:13px;">/ 100</span>
+            <span class="score-grade" id="scoreGrade"></span>
+          </div>
+          <div id="scoreBars"></div>
+        </div>
+      </div>
+      <div class="action-row">
+        <button class="btn-sub primary" id="copyBtn">📋 一键复制文案</button>
+        <button class="btn-sub" id="dlBtn">⬇️ 下载为 .md</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 设置弹窗 -->
+<div class="modal-mask" id="modalMask">
+  <div class="modal">
+    <h3>⚙️ LLM API 设置</h3>
+    <div class="hint">不配置 API Key 也可以使用，将使用内置规则引擎（离线模式）。<br>支持 DeepSeek / Kimi / 智谱GLM / 通义千问 / MiniMax / OpenAI 及任意 OpenAI 兼容接口。</div>
+    <label>API Key</label>
+    <input type="password" id="cfgKey" placeholder="粘贴你的 API Key">
+    <div class="modal-btns">
+      <button class="m-btn red" id="detectBtn">🔍 自动识别并保存</button>
+      <button class="m-btn line" id="testBtn">🔌 测试连接</button>
+    </div>
+    <div class="detect-result" id="detectResult"></div>
+    <label id="modelLabel" style="display:none">选择模型</label>
+    <select id="modelSelect" style="display:none"></select>
+    <div class="adv-toggle" id="advToggle">▸ 高级设置（自定义接口地址 / 手动填模型）</div>
+    <div class="adv-box" id="advBox">
+      <label>自定义接口地址（OpenAI 兼容，跳过自动识别）</label>
+      <input id="cfgBaseUrl" placeholder="https://api.deepseek.com/v1">
+      <label>模型名</label>
+      <input id="cfgModel" placeholder="deepseek-chat">
+      <div class="modal-btns">
+        <button class="m-btn red" id="saveManualBtn">💾 保存手动配置</button>
+      </div>
+    </div>
+    <div class="cur-config" id="curConfig">当前配置：未配置</div>
+    <div class="modal-btns">
+      <button class="m-btn gray" id="clearBtn">🗑️ 清除配置</button>
+      <button class="m-btn gray" id="closeModal">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CATEGORIES = ["美食探店","护肤美妆","职场干货","家居好物","旅行攻略"];
+const SCORE_MAX = {"首屏吸引力":25,"Emoji节奏感":15,"内容结构":20,"CTA效果":15,"关键词密度":10,"标题质量":15};
+let state = { category:CATEGORIES[0], titles:[], selectedTitle:0, content:"", tags:[], scores:{}, total:0 };
+
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+async function api(path, method, body){
+  const opt = { method: method||'GET', headers:{'Content-Type':'application/json'} };
+  if(body) opt.body = JSON.stringify(body);
+  const r = await fetch(path, opt);
+  return r.json();
+}
+
+/* ---------- 模式徽章 ---------- */
+async function refreshStatus(){
+  try{
+    const s = await api('/api/status');
+    const b = document.getElementById('modeBadge');
+    if(s.mode==='llm'){ b.className='badge online'; b.textContent='AI在线模式 · '+(s.provider||'LLM'); }
+    else { b.className='badge offline'; b.textContent='离线规则引擎模式'; }
+  }catch(e){}
+}
+
+/* ---------- 品类胶囊 ---------- */
+const capBox = document.getElementById('capsules');
+CATEGORIES.forEach((c,i)=>{
+  const el=document.createElement('div');
+  el.className='capsule'+(i===0?' active':''); el.textContent=c;
+  el.onclick=()=>{ state.category=c; document.querySelectorAll('.capsule').forEach(x=>x.classList.remove('active')); el.classList.add('active'); };
+  capBox.appendChild(el);
+});
+
+/* ---------- 生成 ---------- */
+document.getElementById('genBtn').onclick = async ()=>{
+  const topic = document.getElementById('topicInput').value.trim();
+  const details = document.getElementById('detailsInput').value.trim();
+  const errBox = document.getElementById('errBox');
+  errBox.style.display='none'; document.getElementById('fallbackBox').style.display='none';
+  if(!topic){ errBox.textContent='请输入主题关键词，例如「杭州周末brunch」'; errBox.style.display='block'; return; }
+  const btn = document.getElementById('genBtn');
+  btn.disabled=true;
+  const waitStart = Date.now();
+  const stageEl = document.getElementById('genStage');
+  const STAGES = [[0,'💡 正在构思 5 个爆款标题…'],[8,'✍️ 正在撰写笔记正文…'],[18,'🏷️ 正在生成推荐标签…'],[25,'📊 正在进行六维爆款潜力自评…'],[35,'🔥 AI 还在打磨细节，马上就好…']];
+  btn.innerHTML='<span class="spinner"></span>AI 正在奋笔疾书… 0s';
+  stageEl.textContent = STAGES[0][1]; stageEl.style.display='block';
+  const waitTimer = setInterval(()=>{
+    const s = Math.floor((Date.now()-waitStart)/1000);
+    btn.innerHTML='<span class="spinner"></span>AI 正在奋笔疾书… '+s+'s';
+    for(let i=STAGES.length-1;i>=0;i--){ if(s>=STAGES[i][0]){ stageEl.textContent=STAGES[i][1]; break; } }
+  }, 1000);
+  try{
+    const r = await api('/api/generate','POST',{category:state.category, topic, details});
+    if(!r.ok){ errBox.textContent='生成失败：'+r.error; errBox.style.display='block'; return; }
+    state.titles=r.titles; state.content=r.content; state.tags=r.tags||[];
+    state.scores=r.scores; state.total=r.total_score; state.selectedTitle=0;
+    const st=document.getElementById('srcTag');
+    if(r.source==='llm'){ st.className='src-tag llm'; st.textContent='AI 生成'; }
+    else { st.className='src-tag offline'; st.textContent='离线引擎生成'; }
+    if(r.fallback_reason){
+      const fb=document.getElementById('fallbackBox');
+      fb.textContent='⚠️ LLM 调用失败（'+r.fallback_reason+'），已自动降级为离线规则引擎生成。';
+      fb.style.display='block';
+    }
+    renderResult();
+  }catch(e){
+    errBox.textContent='请求出错：'+e.message; errBox.style.display='block';
+  }finally{
+    clearInterval(waitTimer);
+    stageEl.style.display='none';
+    btn.disabled=false; btn.innerHTML='🔥 生成爆款文案';
+  }
+};
+
+function renderResult(){
+  document.getElementById('resultArea').style.display='block';
+  // 标题卡片
+  const grid=document.getElementById('titleGrid'); grid.innerHTML='';
+  state.titles.forEach((t,i)=>{
+    const card=document.createElement('div');
+    card.className='title-card'+(i===state.selectedTitle?' selected':'');
+    card.innerHTML='<span class="t-check">✔ 已选</span><span class="t-formula">'+(t.formula||'公式'+(i+1))+'</span><div class="t-text">'+escapeHtml(t.title)+'</div>';
+    card.onclick=()=>{ state.selectedTitle=i; renderResult(); };
+    grid.appendChild(card);
+  });
+  // 手机预览
+  document.getElementById('pvTitle').textContent = state.titles[state.selectedTitle] ? state.titles[state.selectedTitle].title : '';
+  document.getElementById('pvContent').textContent = state.content;
+  document.getElementById('pvTags').textContent = state.tags.map(t=>'#'+t).join(' ');
+  // 标签
+  const chips=document.getElementById('tagChips'); chips.innerHTML='';
+  state.tags.forEach(t=>{ const c=document.createElement('span'); c.className='tag-chip'; c.textContent='#'+t; chips.appendChild(c); });
+  // 评分
+  document.getElementById('scoreNum').textContent = Math.round(state.total);
+  const g=document.getElementById('scoreGrade');
+  g.textContent = state.total>=85?'S级 · 爆款潜力极高':state.total>=75?'A级 · 优质内容':state.total>=60?'B级 · 合格可发':'C级 · 建议优化';
+  const bars=document.getElementById('scoreBars'); bars.innerHTML='';
+  Object.keys(SCORE_MAX).forEach(dim=>{
+    const v=state.scores[dim]||0, max=SCORE_MAX[dim], pct=Math.min(100, v/max*100);
+    const row=document.createElement('div'); row.className='score-row';
+    row.innerHTML='<span class="score-name">'+dim+'</span><div class="score-bar-bg"><div class="score-bar"></div></div><span class="score-val">'+v+'/'+max+'</span>';
+    bars.appendChild(row);
+    setTimeout(()=>{ row.querySelector('.score-bar').style.width=pct+'%'; },60);
+  });
+  document.getElementById('resultArea').scrollIntoView({behavior:'smooth', block:'start'});
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function fullMarkdown(){
+  const t = state.titles[state.selectedTitle];
+  let md = '# '+(t?t.title:'')+'\n\n';
+  md += '> 备选标题：\n';
+  state.titles.forEach(x=>{ md += '> - 【'+x.formula+'】'+x.title+'\n'; });
+  md += '\n'+state.content+'\n\n'+state.tags.map(x=>'#'+x).join(' ')+'\n';
+  return md;
+}
+
+document.getElementById('copyBtn').onclick = async ()=>{
+  const text = fullMarkdown();
+  try{ await navigator.clipboard.writeText(text); toast('✅ 已复制到剪贴板'); }
+  catch(e){
+    const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); ta.remove(); toast('✅ 已复制到剪贴板');
+  }
+};
+document.getElementById('dlBtn').onclick = ()=>{
+  const blob = new Blob([fullMarkdown()], {type:'text/markdown;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '小红书文案_'+(state.titles[state.selectedTitle]?state.titles[state.selectedTitle].title.slice(0,12):'笔记')+'.md';
+  a.click(); URL.revokeObjectURL(a.href); toast('⬇️ 已开始下载');
+};
+
+/* ---------- 设置弹窗 ---------- */
+const mask=document.getElementById('modalMask');
+document.getElementById('openSettings').onclick=()=>{ mask.classList.add('show'); loadCurConfig(); };
+document.getElementById('closeModal').onclick=()=>mask.classList.remove('show');
+mask.onclick=e=>{ if(e.target===mask) mask.classList.remove('show'); };
+document.getElementById('advToggle').onclick=()=>{
+  const b=document.getElementById('advBox'); b.classList.toggle('show');
+  document.getElementById('advToggle').textContent = b.classList.contains('show')?'▾ 高级设置（自定义接口地址 / 手动填模型）':'▸ 高级设置（自定义接口地址 / 手动填模型）';
+};
+async function loadCurConfig(){
+  const r = await api('/api/config');
+  const c = r.config||{};
+  document.getElementById('curConfig').innerHTML = c.api_key
+    ? '当前配置：厂商 <b>'+(c.provider||'自定义')+'</b> ｜ Key '+c.api_key+'<br>接口 '+(c.base_url||'-')+'<br>模型 '+(c.model||'-')
+    : '当前配置：未配置（离线规则引擎模式）';
+}
+function showDetect(msg, ok){
+  const d=document.getElementById('detectResult');
+  d.className='detect-result '+(ok?'ok':'fail'); d.innerHTML=msg;
+}
+document.getElementById('detectBtn').onclick = async ()=>{
+  const key=document.getElementById('cfgKey').value.trim();
+  if(!key){ showDetect('请先输入 API Key', false); return; }
+  const btn=document.getElementById('detectBtn'); btn.disabled=true; btn.textContent='🔍 识别中（约需几秒）…';
+  try{
+    const r = await api('/api/detect','POST',{api_key:key});
+    if(!r.ok){ showDetect('❌ '+r.error, false); return; }
+    const sel=document.getElementById('modelSelect');
+    sel.innerHTML=''; sel.style.display='block'; document.getElementById('modelLabel').style.display='block';
+    (r.models.length?r.models:['（未获取到模型列表，请在高级设置手动填写）']).forEach(m=>{
+      const o=document.createElement('option'); o.value=m; o.textContent=m; sel.appendChild(o);
+    });
+    const model = sel.value;
+    await api('/api/config','POST',{api_key:key, provider:r.provider, base_url:r.base_url, model:model});
+    showDetect('✅ 识别成功：<b>'+r.provider+'</b>，配置已自动保存。<br>可在下方下拉框切换模型（切换后需点「测试连接」确认）。', true);
+    sel.onchange = async ()=>{ await api('/api/config','POST',{api_key:key, provider:r.provider, base_url:r.base_url, model:sel.value}); toast('已保存模型：'+sel.value); refreshStatus(); loadCurConfig(); };
+    refreshStatus(); loadCurConfig();
+  }finally{ btn.disabled=false; btn.textContent='🔍 自动识别并保存'; }
+};
+document.getElementById('testBtn').onclick = async ()=>{
+  const btn=document.getElementById('testBtn'); btn.disabled=true; btn.textContent='🔌 测试中…';
+  try{
+    const r = await api('/api/test','POST',{});
+    if(r.ok) showDetect('✅ 连接可用！延迟 '+r.latency_ms+'ms，模型回复：「'+r.reply+'」', true);
+    else showDetect('❌ '+r.error, false);
+  }finally{ btn.disabled=false; btn.textContent='🔌 测试连接'; }
+};
+document.getElementById('saveManualBtn').onclick = async ()=>{
+  const key=document.getElementById('cfgKey').value.trim();
+  const base=document.getElementById('cfgBaseUrl').value.trim();
+  const model=document.getElementById('cfgModel').value.trim();
+  if(!key||!base||!model){ showDetect('请完整填写 API Key、接口地址和模型名', false); return; }
+  await api('/api/config','POST',{api_key:key, provider:'自定义', base_url:base, model:model});
+  showDetect('✅ 手动配置已保存，建议点「测试连接」验证。', true);
+  refreshStatus(); loadCurConfig();
+};
+document.getElementById('clearBtn').onclick = async ()=>{
+  await api('/api/config/clear','POST',{});
+  document.getElementById('cfgKey').value='';
+  showDetect('配置已清除，当前为离线规则引擎模式。', true);
+  refreshStatus(); loadCurConfig();
+};
+
+refreshStatus();
+</script>
+</body>
+</html>

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小红书爆款文案Agent - 交互演示</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--red:#ff2442;--red-light:#fff0f0;--pink:#ff6b81;--bg:#fffaf5;--card:#fff;--text:#2d2d2d;--text-light:#888;--border:#f0e8e0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+header{background:linear-gradient(135deg,#ff2442 0%,#ff6b81 50%,#ff9a76 100%);color:#fff;text-align:center;padding:40px 20px 30px;border-radius:0 0 32px 32px}
+header h1{font-size:28px;font-weight:700;margin-bottom:8px}
+header p{font-size:14px;opacity:.9}
+.container{max-width:900px;margin:0 auto;padding:20px}
+.card{background:var(--card);border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.04);border:1px solid var(--border)}
+.card h2{font-size:17px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.input-group{margin-bottom:16px}
+.input-group label{display:block;font-size:13px;font-weight:600;color:var(--text-light);margin-bottom:6px}
+.input-group input,.input-group textarea,.input-group select{width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;transition:border-color .2s;background:#fff}
+.input-group input:focus,.input-group textarea:focus,.input-group select:focus{outline:none;border-color:var(--red)}
+.input-group textarea{min-height:80px;resize:vertical}
+.tag-select{display:flex;gap:8px;flex-wrap:wrap}
+.tag-opt{padding:8px 16px;border:2px solid var(--border);border-radius:20px;cursor:pointer;font-size:13px;transition:all .2s;background:#fff}
+.tag-opt:hover{border-color:var(--red);color:var(--red)}
+.tag-opt.active{background:var(--red);color:#fff;border-color:var(--red)}
+.btn-generate{width:100%;padding:14px;background:linear-gradient(135deg,#ff2442,#ff6b81);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit}
+.btn-generate:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(255,36,66,.3)}
+.btn-generate:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.loading{text-align:center;padding:30px;display:none}
+.loading.show{display:block}
+.loading-bar{width:200px;height:4px;background:#f0e8e0;border-radius:2px;margin:12px auto;overflow:hidden}
+.loading-bar-inner{width:0;height:100%;background:linear-gradient(90deg,#ff2442,#ff6b81);border-radius:2px;transition:width .3s}
+.result{display:none}
+.result.show{display:block;animation:fadeUp .5s}
+@keyframes fadeUp{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
+.title-option{background:var(--red-light);border-radius:12px;padding:16px;margin:10px 0;cursor:pointer;transition:all .2s;border:2px solid transparent}
+.title-option:hover{border-color:var(--red);transform:translateX(4px)}
+.title-option .num{display:inline-block;background:var(--red);color:#fff;width:24px;height:24px;border-radius:50%;text-align:center;line-height:24px;font-size:12px;font-weight:700;margin-right:8px}
+.title-option .title{font-size:16px;font-weight:600}
+.title-option .tech{font-size:12px;color:var(--text-light);margin-top:4px}
+.content-box{background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;font-size:14px;line-height:2;white-space:pre-wrap;margin-top:12px}
+.content-box .emoji{font-size:16px}
+.kv-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--border);font-size:13px}
+.kv-row:last-child{border:none}
+.kv-label{color:var(--text-light)}
+.kv-val{font-weight:600}
+.phone-mock{background:#f5f5f5;border-radius:24px;padding:16px;max-width:340px;margin:20px auto;border:3px solid #333}
+.phone-screen{background:#fff;border-radius:16px;padding:16px;min-height:400px;font-size:13px;line-height:1.8}
+.phone-screen .note-title{font-size:16px;font-weight:700;margin-bottom:8px}
+.phone-screen .note-img{width:100%;height:200px;background:linear-gradient(135deg,#ffecd2,#fcb69f);border-radius:10px;margin-bottom:12px;display:flex;align-items:center;justify-content:center;color:#999;font-size:13px}
+.phone-screen .note-content{font-size:13px;line-height:2;color:#333}
+.phone-screen .note-tags{margin-top:12px}
+.phone-screen .note-tags span{color:#3b82f6;font-size:12px;margin-right:6px}
+.phone-screen .note-actions{display:flex;justify-content:space-around;margin-top:16px;padding-top:12px;border-top:1px solid #eee;color:#999;font-size:12px}
+.rule-card{background:#fff8f0;border:1px solid #ffe0b2;border-radius:10px;padding:12px;margin:8px 0;font-size:13px}
+.rule-card strong{color:var(--red)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:640px){.grid-2{grid-template-columns:1fr}header h1{font-size:22px}}
+.metric-badge{display:inline-block;background:linear-gradient(135deg,#ff2442,#ff6b81);color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;margin:2px}
+.section-divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:20px 0}
+.technique-list{display:grid;gap:8px;margin-top:12px}
+.technique-item{background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:13px;display:flex;align-items:flex-start;gap:8px}
+.technique-item .dot{width:6px;height:6px;border-radius:50%;background:var(--red);margin-top:7px;flex-shrink:0}
+footer{text-align:center;padding:30px;color:var(--text-light);font-size:12px}
+</style>
+</head>
+<body>
+
+<header>
+<h1>📕 小红书爆款文案 Agent</h1>
+<p>基于100+爆款笔记拆解 · RAG知识库 · 智能文案生成</p>
+</header>
+
+<div class="container">
+
+<div class="card">
+<h2>🔥 爆款规律知识库（已内置）</h2>
+<p style="font-size:13px;color:var(--text-light);margin-bottom:12px">基于100+真实爆款笔记总结的核心规律：</p>
+<div class="grid-2">
+<div>
+<div class="rule-card"><strong>标题公式</strong>：数字+痛点+解决方案（如"5个方法让你的XX提升300%"）</div>
+<div class="rule-card"><strong>首段模板</strong>：共鸣开场→抛出问题→预告价值（3行内抓住读者）</div>
+<div class="rule-card"><strong>Emoji密度</strong>：每2-3行1个emoji，增加视觉节奏感但不显杂乱</div>
+</div>
+<div>
+<div class="rule-card"><strong>CTA套路</strong>：收藏型"建议收藏慢慢看" + 互动型"你们觉得呢？"</div>
+<div class="rule-card"><strong>标签策略</strong>：3-5个标签，1个大流量+2个精准+1个长尾</div>
+<div class="rule-card"><strong>字数控制</strong>：300-600字最佳，首屏前3行决定打开率</div>
+</div>
+</div>
+</div>
+
+<div class="card">
+<h2>✍️ 生成你的爆款文案</h2>
+
+<div class="input-group">
+<label>选择内容品类</label>
+<div class="tag-select" id="categorySelect">
+<div class="tag-opt active" onclick="selectCat(this,0)">🍜 美食探店</div>
+<div class="tag-opt" onclick="selectCat(this,1)">🌿 护肤美妆</div>
+<div class="tag-opt" onclick="selectCat(this,2)">💼 职场干货</div>
+<div class="tag-opt" onclick="selectCat(this,3)">🏠 家居好物</div>
+<div class="tag-opt" onclick="selectCat(this,4)">📸 旅行攻略</div>
+</div>
+</div>
+
+<div class="input-group">
+<label>核心关键词/主题</label>
+<input type="text" id="topicInput" placeholder="例如：杭州周末brunch推荐" value="杭州周末brunch推荐">
+</div>
+
+<div class="input-group">
+<label>文案风格</label>
+<select id="styleSelect">
+<option value="0">种草安利型（热情推荐）</option>
+<option value="1">干货攻略型（实用分享）</option>
+<option value="2">情感共鸣型（走心故事）</option>
+</select>
+</div>
+
+<button class="btn-generate" onclick="generate()" id="genBtn">✨ 一键生成爆款文案</button>
+</div>
+
+<div class="loading" id="loading">
+<p style="font-size:15px;color:var(--text-light)">AI正在生成爆款文案...</p>
+<div class="loading-bar"><div class="loading-bar-inner" id="loadingBar"></div></div>
+<p style="font-size:12px;color:#bbb" id="loadingText">分析品类爆款规律...</p>
+</div>
+
+<div class="result" id="result">
+
+<div class="card">
+<h2>📊 生成分析</h2>
+<div id="analysisMetrics"></div>
+</div>
+
+<div class="card">
+<h2>🏷️ 推荐标题（5选1）</h2>
+<div id="titleOptions"></div>
+</div>
+
+<div class="card">
+<h2>📝 完整文案</h2>
+<div class="content-box" id="contentOutput"></div>
+</div>
+
+<div class="card">
+<h2>📱 笔记预览效果</h2>
+<div class="phone-mock">
+<div class="phone-screen">
+<div class="note-img">📷 封面图区域</div>
+<div class="note-title" id="previewTitle"></div>
+<div class="note-content" id="previewContent"></div>
+<div class="note-tags" id="previewTags"></div>
+<div class="note-actions">
+<span>❤️ 点赞</span>
+<span>⭐ 收藏</span>
+<span>💬 评论</span>
+<span>↗️ 分享</span>
+</div>
+</div>
+</div>
+</div>
+
+<div class="card">
+<h2>💡 爆款技巧解析</h2>
+<div class="technique-list" id="techniques"></div>
+</div>
+
+</div>
+</div>
+
+<footer>
+<p>小红书爆款文案 Agent v1.0 · 基于RAG知识库 + 提示词工程 + 爆款规律拆解</p>
+<p style="margin-top:6px">本演示为预置数据展示 · 接入LLM后可生成任意品类文案</p>
+</footer>
+
+<script>
+const contents = [
+// 美食探店
+{
+  titles: [
+    {text:'杭州brunch地图🗺️这5家我愿意每周都去！',tech:'数字列举+个人背书+地域精准'},
+    {text:'求求你们别再只知道%Arabica了😭杭州brunch天花板在这',tech:'反差对比+情绪词+好奇心缺口'},
+    {text:'在杭州！周末brunch人均80吃到扶墙出🥞附点单攻略',tech:'价格锚点+体验感+实用攻略'},
+    {text:'本地人私藏的5家brunch店🤫游客根本找不到',tech:'稀缺性+本地人身份+神秘感'},
+    {text:'杭州brunch｜花200块吃出仪式感✨周末就该这样对自己',tech:'价格+情感价值+生活态度'}
+  ],
+  content:`姐妹们！！杭州的brunch文化真的太被低估了😭
+
+作为一个每周至少吃2次brunch的本地人，今天把压箱底的5家店全掏出来，每一家都是我会无限回购的！！
+
+🥞 ① The Brew · 西湖边最chill的brunch
+📍南山路88号 | 💰人均98
+必点：牛油果开放三明治+dirty
+这家环境真的绝了，法式复古风，阳光透过落地窗洒进来，拍照0废片！三明治的牛油果给得超大方，面包是现烤的酸种，外脆内软～
+
+🍳 ② 早鸟EarlyBird · 性价比之王
+📍中山中路32号 | 💰人均65
+必点：全日早餐+手冲咖啡
+这家是我心目中的杭州brunch性价比天花板！一个全日早餐有炒蛋、培根、香肠、烤番茄、蘑菇、吐司，量大到两个女生share都够！
+
+🥐 ③ Maison de Lyon · 法式浪漫担当
+📍法国街·里昂路12号 | 💰人均128
+必点：里昂传统早午餐套餐
+适合约会或闺蜜聚会！每道菜摆盘都像艺术品，法式洋葱汤配croissant简直是神仙搭配～
+
+☕ ④ 木卡咖啡 · 文艺小众之选
+📍馒头山社区·创意园B栋 | 💰人均72
+必点：咖啡吐司+季节特调
+藏在创意园里的宝藏小店！老板是个前咖啡冠军，豆子是自己烘的。吐司用的是北海道生吐司，抹上自制的坚果酱，简单但惊艳！
+
+🌮 ⑤ Chido · 中韩融合brunch新玩法
+📍武林路168号 | 💰人均85
+必点：韩式拌饭早午餐+芝士年糕
+谁说brunch一定要西式？这家把韩式拌饭做成brunch套餐，意外地搭！适合想尝试新鲜感的朋友～
+
+📌 小贴士：
+• 周末建议11点前到，12点后基本都要排队
+• 提前在大众点评取号能省30分钟
+• 大部分店支持外卖，但堂食体验感完全不一样
+
+你们杭州还有什么私藏的brunch店？评论区交出来！🫶
+
+#杭州brunch #杭州探店 #周末去哪儿 #杭州美食 #brunch推荐`,
+  metrics:[
+    {label:'标题情绪值',value:'⭐⭐⭐⭐⭐',note:'含"求求你们""天花板"等强情绪词'},
+    {label:'首屏吸引力',value:'95分',note:'3行内抛出痛点+预告价值'},
+    {label:'Emoji节奏',value:'每2.5行1个',note:'符合爆款最佳密度区间'},
+    {label:'CTA引导',value:'收藏型+互动型',note:'双CTA叠加，提升收藏率+评论率'},
+    {label:'标签策略',value:'2大+2精+1长尾',note:'#杭州美食(大) #杭州brunch(精)'}
+  ],
+  techniques:[
+    '标题用"求求你们别再只知道"制造信息差，引发好奇——爆款标题经典结构',
+    '首段"姐妹们！！"直接拉近距离，用感叹号制造紧迫感——小红书特有的对话感',
+    '每家店标注地址+人均+必点菜，降低读者决策成本——干货型内容的核心',
+    '"压箱底""无限回购"等词强化个人背书，比"推荐"更有说服力',
+    '结尾用"评论区交出来"引导互动，提升评论量——小红书算法权重最高的指标之一',
+    '小贴士提供额外价值，增加"收藏"动机——收藏率直接影响笔记长尾流量'
+  ]
+},
+// 护肤美妆
+{
+  titles:[
+    {text:'油皮亲妈！这瓶精华让我3天不泛油光😱',tech:'效果前置+具体数据+震惊表情'},
+    {text:'求求了别再乱买了❗油皮精华红黑榜来了',tech:'祈使句+红黑榜形式+悬念'},
+    {text:'油皮姐妹看过来！5款精华真实测评｜有雷有宝',tech:'精准人群+数量+真实感+反差'}
+  ],
+  content:`油皮姐妹们集合！！今天来交作业了📝
+
+混油皮的我，从大学到现在试过不下30款精华，踩过的雷能绕西湖一圈😭 今天把回购率最高的5款精华拿出来，有真宝藏也有智商税，帮你们避雷！
+
+🟢 红榜第一：XX控油精华
+💰 168元/30ml | ⭐ 推荐指数：★★★★★
+用完第三天，T区出油量肉眼可见减少了！质地是透明水状，上脸秒吸收，完全不会黏腻。最绝的是后续上妆，持妆时间直接翻倍！
+
+🟢 红榜第二：XX烟酰胺精华
+💰 89元/50ml | ⭐ 推荐指数：★★★★☆
+性价比之王！控油+提亮双效，用了两周毛孔真的有变细腻。唯一缺点是保湿力一般，干皮姐妹可能觉得不够。
+
+🔴 黑榜第一：某大牌控油精华
+💰 580元/30ml | ⭐ 推荐指数：★★☆☆☆
+说实话这个价格我真的emmm...控油效果跟百元内的差不多，而且含酒精，敏感期用着刺痛。贵不等于好，这瓶就是典型！
+
+📌 油皮选精华的3个原则：
+1️⃣ 看质地：水状>乳液状>油状
+2️⃣ 看成分：烟酰胺、水杨酸、茶树精油是油皮的好朋友
+3️⃣ 避开：矿物油、羊毛脂等致痘成分
+
+你们最爱哪款精华？评论区一起种草（拔草）！🫶
+
+#油皮护肤 #精华测评 #护肤干货 #控油精华 #油皮姐妹`,
+  metrics:[
+    {label:'标题痛点精准度',value:'98分',note:'直击"油皮"人群最核心的出油困扰'},
+    {label:'红黑榜形式',value:'高收藏率',note:'对比形式天然适合收藏参考'},
+    {label:'价格标注',value:'增强信任感',note:'标注价格+容量，显得真实客观'},
+    {label:'结尾互动',value:'双向引导',note:'种草+拔草双向互动，提升评论量'},
+    {label:'干货密度',value:'高',note:'3个选购原则增加实用价值'}
+  ],
+  techniques:[
+    '红黑榜形式是小红书护肤品类转化率最高的内容结构之一',
+    '标注具体价格+容量让读者能快速做购买决策',
+    '有褒有贬增加内容可信度，避免"全是广告"的感觉',
+    '选购原则部分提供独立于产品的通用价值，增加收藏动机'
+  ]
+}
+];
+
+let currentCat = 0;
+function selectCat(el,idx){
+  document.querySelectorAll('.tag-opt').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  currentCat = idx;
+}
+
+function generate(){
+  const topic = document.getElementById('topicInput').value.trim();
+  if(!topic){alert('请输入关键词/主题');return;}
+
+  const loading=document.getElementById('loading');
+  const result=document.getElementById('result');
+  result.classList.remove('show');
+  loading.classList.add('show');
+  document.getElementById('genBtn').disabled=true;
+
+  const steps=['分析品类爆款规律...','匹配标题模板...','生成文案内容...','优化emoji和标签...','计算评分...'];
+  let step=0;
+  const bar=document.getElementById('loadingBar');
+  const txt=document.getElementById('loadingText');
+  const interval=setInterval(()=>{
+    step++;
+    if(step<steps.length){
+      bar.style.width=(step/steps.length*100)+'%';
+      txt.textContent=steps[step];
+    }else{
+      clearInterval(interval);
+      bar.style.width='100%';
+      setTimeout(()=>{
+        loading.classList.remove('show');
+        bar.style.width='0%';
+        renderResult(contents[0]);
+        result.classList.add('show');
+        document.getElementById('genBtn').disabled=false;
+        result.scrollIntoView({behavior:'smooth'});
+      },300);
+    }
+  },500);
+}
+
+function renderResult(d){
+  // Metrics
+  let mHTML='';
+  d.metrics.forEach(m=>{
+    mHTML+=`<div class="kv-row"><span class="kv-label">${m.label}</span><span class="kv-val">${m.value} <span style="font-weight:400;color:var(--text-light);font-size:12px">${m.note}</span></span></div>`;
+  });
+  document.getElementById('analysisMetrics').innerHTML=mHTML;
+
+  // Titles
+  let tHTML='';
+  d.titles.forEach((t,i)=>{
+    tHTML+=`<div class="title-option" onclick="this.style.borderColor='var(--red)';selectTitle(${i})"><span class="num">${i+1}</span><span class="title">${t.text}</span><div class="tech">💡 技巧：${t.tech}</div></div>`;
+  });
+  document.getElementById('titleOptions').innerHTML=tHTML;
+
+  // Content
+  document.getElementById('contentOutput').textContent=d.content;
+
+  // Phone preview
+  document.getElementById('previewTitle').textContent=d.titles[0].text;
+  // Truncate content for preview
+  const lines = d.content.split('\n').slice(0,8);
+  document.getElementById('previewContent').textContent=lines.join('\n')+'\n...展开全文';
+  // Tags
+  const tags = d.content.match(/#[^\s#]+/g)||[];
+  document.getElementById('previewTags').innerHTML=tags.map(t=>`<span>${t}</span>`).join('');
+
+  // Techniques
+  let techHTML='';
+  d.techniques.forEach(t=>{
+    techHTML+=`<div class="technique-item"><span class="dot"></span><span>${t}</span></div>`;
+  });
+  document.getElementById('techniques').innerHTML=techHTML;
+}
+
+function selectTitle(idx){
+  document.querySelectorAll('.title-option').forEach((el,i)=>{
+    el.style.borderColor = i===idx ? 'var(--red)' : 'transparent';
+  });
+  document.getElementById('previewTitle').textContent=contents[0].titles[idx].text;
+}
+</script>
+</body>
+</html>

@@ -113,3 +113,7 @@ python3 xhs_agent.py
 ## License
 
 MIT
+
+## 关于作者
+
+由李建鹏设计开发 · 作品集主页：https://lijianpeng-arch.github.io/
